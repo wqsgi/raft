@@ -1,4 +1,4 @@
-package nodes
+package wei
 
 
 type NodeManager interface {

@@ -1,9 +1,8 @@
 package wei
 import (
-	"wei"
-	"fmt"
 	"time"
 	"math/rand"
+	"fmt"
 )
 
 type Role int
@@ -17,7 +16,7 @@ const (
 
 type Raft struct {
 	currentTerm   int32
-	rpc           RpcServer
+	rpc           *Rpc
 	receiveEvents chan *CommandEvent
 	sendEvents    chan *CommandEvent
 	role          Role
@@ -39,9 +38,9 @@ type Server interface {
 }
 
 
-func NewRaft() (*Raft, error) {
+func NewRaft() (Raft, error) {
 
-	raft := &Raft{currentTerm:0, rpc:NewRpcServer() }
+	raft := Raft{currentTerm:0, rpc:NewRpcServer() }
 
 	return raft, nil
 }
@@ -53,6 +52,7 @@ func (r *Raft) Start() error {
 
 
 
+	return nil
 
 
 }
@@ -61,6 +61,7 @@ func (r *Raft) loopLeader() error {
 
 
 
+	return nil
 
 }
 
@@ -77,7 +78,7 @@ func (r *Raft) loopFollower() error {
 			}
 		case <-t.C:
 			t.Reset(time.Second*randomTime())
-			r.receiveEvents <- &CommandEvent{&VoteRequest{}, eventType:VOTE_REP}
+			r.receiveEvents <- &CommandEvent{target:&VoteRequest{}, eventType:VOTE_REP}
 		}
 
 	}
@@ -92,11 +93,11 @@ func (r *Raft) loopCandidate() error {
 
 			switch event.eventType{
 			case VOTE:
-				var vote VoteRequest = event.target;
+				var vote VoteRequest = event.target.(VoteRequest);
 				if r.currentTerm>vote.term {
 					r.sendEvents <- &CommandEvent{target:&VoteResponse{success:false, term:r.currentTerm}, eventType:VOTE_REP}
 				} else {
-					r.receiveEvents <- &CommandEvent{&VoteResponse{success:true, term:r.currentTerm}, eventType:VOTE_REP}
+					r.receiveEvents <- &CommandEvent{target:&VoteResponse{success:true, term:r.currentTerm}, eventType:VOTE_REP}
 					r.role = FOLLOWER
 					return nil
 				}
@@ -105,7 +106,7 @@ func (r *Raft) loopCandidate() error {
 
 			// 如果长时间得不到应答。
 			t.Reset(time.Second*randomTime())
-			r.receiveEvents <- &CommandEvent{&VoteRequest{}, eventType:VOTE_REP}
+			r.receiveEvents <- &CommandEvent{target:&VoteRequest{}, eventType:VOTE_REP}
 		}
 
 	}
@@ -117,9 +118,11 @@ func (r *Raft) processVote(req *VoteRequest) {
 
 
 
-func randomTime() int32 {
-
-	return rand.Int31n(5)
+func randomTime() time.Duration {
+	var offer int32 = rand.Int31n(5);
+	fmt.Println(offer)
+	var ret  = time.Second *time.Duration(offer)
+	return ret
 
 }
 

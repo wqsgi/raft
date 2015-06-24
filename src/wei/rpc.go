@@ -41,7 +41,7 @@ type AppendLog struct {
 type AppendLogAck struct {
 
 }
-func NewRpcServer()*Rpc{
+func NewRpcServer() *Rpc{
 	return &Rpc{}
 }
 
